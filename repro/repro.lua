@@ -14,20 +14,20 @@ vim.env.LAZY_STDPATH = ".repro"
 load(vim.fn.system("curl -s https://raw.githubusercontent.com/folke/lazy.nvim/main/bootstrap.lua"))()
 
 local plugins = {
-  {
-    "flushwhy/customrss.nvim",
-    dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h"),
-    lazy = false,
-    opts = {
-      feeds = {
-        { url = "https://neovim.io/news.xml", name = "Neovim" },
-        { url = "https://github.blog/feed/", name = "GitHub Blog" },
-      },
-      sort = { by = "date" },
-    },
-  },
+	{
+		"flushwhy/customrss.nvim",
+		dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h"),
+		lazy = false,
+		opts = {
+			feeds = {
+				{ url = "https://neovim.io/news.xml", name = "Neovim" },
+				{ url = "https://github.blog/feed/", name = "GitHub Blog" },
+			},
+			sort = { by = "date" },
+		},
+	},
 
-  -- other plugins ...
+	-- other plugins ...
 }
 
 require("lazy.minit").repro({ spec = plugins })
@@ -37,23 +37,23 @@ require("lazy.minit").repro({ spec = plugins })
 -- Since this plugin has no display of its own, print a quick summary to
 -- prove the pipeline works end-to-end in this repro environment.
 vim.api.nvim_create_autocmd("User", {
-  pattern = "CustomRssUpdated",
-  callback = function(args)
-    local entries, errors = args.data.entries, args.data.errors
-    print(("[repro] customrss.nvim: %d entries, %d errors"):format(#entries, #errors))
-    for _, e in ipairs(entries) do
-      print(("  - [%s] %s"):format(e.feed_name, e.title))
-    end
-  end,
+	pattern = "CustomRssUpdated",
+	callback = function(args)
+		local entries, errors = args.data.entries, args.data.errors
+		print(("[repro] customrss.nvim: %d entries, %d errors"):format(#entries, #errors))
+		for _, e in ipairs(entries) do
+			print(("  - [%s] %s"):format(e.feed_name, e.title))
+		end
+	end,
 })
 
 vim.api.nvim_create_autocmd("VimEnter", {
-  once = true,
-  callback = function()
-    vim.defer_fn(function()
-      require("customrss").refresh()
-    end, 200)
-  end,
+	once = true,
+	callback = function()
+		vim.defer_fn(function()
+			require("customrss").refresh()
+		end, 200)
+	end,
 })
 
 -- RESOURCES:
