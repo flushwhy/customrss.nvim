@@ -3,6 +3,11 @@
 local M = {}
 
 ---@alias CustomRss.SortBy "date"|"feed"|"title"|"unread"
+---@alias CustomRss.SortComparator fun(a: CustomRss.Entry, b: CustomRss.Entry): boolean
+
+---@class CustomRss.SortOpts
+---@field by? CustomRss.SortBy|CustomRss.SortComparator
+---@field order? "asc"|"desc"
 
 -- Each sort type has a different "natural" default direction: newest-first
 -- for dates, A-Z for feed/title, unread-first for unread. `order` overrides it.
@@ -81,7 +86,7 @@ M.factories = FACTORIES
 
 ---Sort a list of entries in place and return it.
 ---@param entries CustomRss.Entry[]
----@param opts? { by?: CustomRss.SortBy|(fun(a: CustomRss.Entry, b: CustomRss.Entry): boolean), order?: "asc"|"desc" }
+---@param opts? CustomRss.SortOpts
 ---@return CustomRss.Entry[] entries the same table, sorted, for chaining
 function M.sort(entries, opts)
 	opts = opts or {}
@@ -91,7 +96,7 @@ function M.sort(entries, opts)
 		table.sort(entries, by)
 		if opts.order == "desc" then
 			local n = #entries
-			for i = 1, n // 2 do
+			for i = 1, math.floor(n / 2) do
 				entries[i], entries[n - i + 1] = entries[n - i + 1], entries[i]
 			end
 		end

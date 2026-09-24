@@ -1,20 +1,28 @@
 ---@meta _
 --- Definition file for LuaLS type information. Not loaded at runtime.
 --- See: https://luals.github.io/wiki/definition-files/
+---
+--- NOTE: `CustomRss.SortBy` and `CustomRss.SortComparator` are declared with
+--- `---@alias` in lua/customrss/sort.lua itself (aliases don't merge across
+--- multiple declarations the way `---@class` does, so they must only be
+--- declared once). Everything here just references them by name.
 
--- lua/rss/init.lua -------------------------------------------------------------
+-- lua/customrss/init.lua -------------------------------------------------------------
 
 ---@class CustomRss.Plugin
 ---@field did_setup boolean whether setup() has been called
 ---@field entries CustomRss.Entry[] cached entries from the last refresh()
 ---@field errors { feed: CustomRss.FeedConfig, err: string }[] per-feed failures from the last refresh()
 ---@field setup fun(opts?: CustomRss.UserOptions) setup the plugin with user options
----@field refresh fun(cb?: fun(entries: CustomRss.Entry[], errors: { feed: CustomRss.FeedConfig, err: string }[]), opts?: { sort?: table }) fetch, parse, sort and cache every configured feed
----@field get_entries fun(opts?: { sort?: table }): CustomRss.Entry[] cached entries, optionally re-sorted without re-fetching
+---@field refresh fun(cb?: fun(entries: CustomRss.Entry[], errors: { feed: CustomRss.FeedConfig, err: string }[]), opts?: CustomRss.RefreshOpts) fetch, parse, sort and cache every configured feed
+---@field get_entries fun(opts?: CustomRss.RefreshOpts): CustomRss.Entry[] cached entries, optionally re-sorted without re-fetching
 ---@field get_errors fun(): { feed: CustomRss.FeedConfig, err: string }[] per-feed failures from the last refresh()
 ---@field mark_read fun(id: string) mark one entry read (persisted)
 ---@field mark_unread fun(id: string) mark one entry unread (persisted)
 ---@field mark_all_read fun() mark every cached entry read (persisted)
+
+---@class CustomRss.RefreshOpts
+---@field sort? CustomRss.SortOpts override config.sort for just this call
 
 --- Entries are tagged with their source feed and hydrated with the persisted
 --- read/unread state before being handed to your display layer.
@@ -30,11 +38,11 @@
 ---@field published_raw? string the original, unparsed date string from the feed
 ---@field read boolean whether this entry has been marked read
 
--- lua/rss/config.lua -------------------------------------------------------------
+-- lua/customrss/config.lua -------------------------------------------------------------
 
 ---@class CustomRss.Config
 ---@field feeds CustomRss.FeedConfig[]
----@field sort { by: CustomRss.SortBy|fun(a: CustomRss.Entry, b: CustomRss.Entry): boolean, order?: "asc"|"desc" }
+---@field sort CustomRss.SortOpts
 ---@field fetch { timeout: integer, concurrency: integer }
 ---@field state_file string path to the JSON file used to persist read/unread state
 ---@field augroup integer augroup created at module load
@@ -46,39 +54,37 @@
 
 ---@class CustomRss.UserOptions
 ---@field feeds? CustomRss.FeedConfig[]
----@field sort? { by?: CustomRss.SortBy|fun(a: CustomRss.Entry, b: CustomRss.Entry): boolean, order?: "asc"|"desc" }
+---@field sort? CustomRss.SortOpts
 ---@field fetch? { timeout?: integer, concurrency?: integer }
 ---@field state_file? string
 
 ---@class CustomRss.DefaultOptions
 ---@field feeds CustomRss.FeedConfig[]
----@field sort { by: CustomRss.SortBy, order: nil }
+---@field sort CustomRss.SortOpts
 ---@field fetch { timeout: integer, concurrency: integer }
 ---@field state_file string
 
--- lua/rss/sort.lua -------------------------------------------------------------
-
----@alias CustomRss.SortBy "date"|"feed"|"title"|"unread"
+-- lua/customrss/sort.lua -------------------------------------------------------------
 
 ---@class CustomRss.Sort
 ---@field default_order table<CustomRss.SortBy, "asc"|"desc">
----@field factories table<CustomRss.SortBy, fun(ascending: boolean): fun(a: CustomRss.Entry, b: CustomRss.Entry): boolean>
----@field sort fun(entries: CustomRss.Entry[], opts?: { by?: CustomRss.SortBy|fun(a: CustomRss.Entry, b: CustomRss.Entry): boolean, order?: "asc"|"desc" }): CustomRss.Entry[]
+---@field factories table<CustomRss.SortBy, fun(ascending: boolean): CustomRss.SortComparator>
+---@field sort fun(entries: CustomRss.Entry[], opts?: CustomRss.SortOpts): CustomRss.Entry[]
 
--- lua/rss/parse.lua -------------------------------------------------------------
+-- lua/customrss/parse.lua -------------------------------------------------------------
 
 ---@class CustomRss.Parse
----@field parse fun(xml: string): boolean, string|CustomRss.Entry[], CustomRss.Entry[]? parse RSS 2.0 or Atom XML into (ok, feed_title|err, entries?)
+---@field parse fun(xml: string): boolean, string?, CustomRss.Entry[]? parse RSS 2.0 or Atom XML; on failure returns (false, err); on success returns (true, feed_title, entries)
 ---@field parse_date fun(str?: string): integer? parse an RFC822 or ISO8601 date into a unix timestamp
 ---@field parse_rfc822 fun(str?: string): integer?
 ---@field parse_iso8601 fun(str?: string): integer?
 
--- lua/rss/fetch.lua -------------------------------------------------------------
+-- lua/customrss/fetch.lua -------------------------------------------------------------
 
 ---@class CustomRss.Fetch
 ---@field fetch_all fun(feeds: CustomRss.FeedConfig[], opts: { timeout?: integer, concurrency?: integer }, on_done: fun(results: { feed: CustomRss.FeedConfig, ok: boolean, body_or_err: string }[]))
 
--- lua/rss/state.lua -------------------------------------------------------------
+-- lua/customrss/state.lua -------------------------------------------------------------
 
 ---@class CustomRss.State
 ---@field setup fun(path: string) configure the JSON file backing the read/unread store
@@ -88,7 +94,7 @@
 ---@field mark_all_read fun(ids: string[])
 ---@field hydrate fun(entries: CustomRss.Entry[]) set `entry.read` on every entry from persisted state
 
--- lua/rss/util.lua -------------------------------------------------------------
+-- lua/customrss/util.lua -------------------------------------------------------------
 
 ---@class CustomRss.Util
 ---@field notify fun(msg: string|table, level?: integer) send notification with plugin title
@@ -96,7 +102,7 @@
 ---@field warn fun(msg: string) send warning notification
 ---@field error fun(msg: string) send error notification
 
--- lua/rss/health.lua -------------------------------------------------------------
+-- lua/customrss/health.lua -------------------------------------------------------------
 
 ---@class CustomRss.Health
 ---@field check fun() perform health check for the plugin

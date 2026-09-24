@@ -16,6 +16,29 @@ local ENTITIES = {
 	["&apos;"] = "'",
 }
 
+-- LuaJIT (Neovim's runtime) has no `utf8` standard library, so numeric XML
+-- entities (&#NN; / &#xHH;) are encoded by hand instead of via `utf8.char`.
+-- Pure arithmetic only, so this also runs unmodified under plain Lua 5.1-5.4.
+---@param n integer unicode code point
+---@return string
+local function utf8_char(n)
+	if n < 0x80 then
+		return string.char(n)
+	elseif n < 0x800 then
+		return string.char(0xc0 + math.floor(n / 0x40), 0x80 + (n % 0x40))
+	elseif n < 0x10000 then
+		return string.char(0xe0 + math.floor(n / 0x1000), 0x80 + (math.floor(n / 0x40) % 0x40), 0x80 + (n % 0x40))
+	elseif n < 0x110000 then
+		return string.char(
+			0xf0 + math.floor(n / 0x40000),
+			0x80 + (math.floor(n / 0x1000) % 0x40),
+			0x80 + (math.floor(n / 0x40) % 0x40),
+			0x80 + (n % 0x40)
+		)
+	end
+	return "" -- not a valid unicode code point; drop it silently
+end
+
 ---Decode XML entities (named + numeric) in a string.
 ---@param str string
 ---@return string
@@ -25,11 +48,11 @@ function M.decode_entities(str)
 	end
 	str = str:gsub("&#x(%x+);", function(hex)
 		local n = tonumber(hex, 16)
-		return n and utf8.char(n) or ""
+		return n and utf8_char(n) or ""
 	end)
 	str = str:gsub("&#(%d+);", function(dec)
 		local n = tonumber(dec)
-		return n and utf8.char(n) or ""
+		return n and utf8_char(n) or ""
 	end)
 	str = str:gsub("&%a+;", ENTITIES)
 	return str
@@ -122,10 +145,10 @@ local MONTHS = {
 ---@return integer
 local function days_from_civil(y, m, d)
 	y = m <= 2 and y - 1 or y
-	local era = (y >= 0 and y or y - 399) // 400
+	local era = math.floor((y >= 0 and y or y - 399) / 400)
 	local yoe = y - era * 400 -- [0, 399]
-	local doy = (153 * (m + (m > 2 and -3 or 9)) + 2) // 5 + d - 1 -- [0, 365]
-	local doe = yoe * 365 + yoe // 4 - yoe // 100 + doy -- [0, 146096]
+	local doy = math.floor((153 * (m + (m > 2 and -3 or 9)) + 2) / 5) + d - 1 -- [0, 365]
+	local doe = yoe * 365 + math.floor(yoe / 4) - math.floor(yoe / 100) + doy -- [0, 146096]
 	return era * 146097 + doe - 719468
 end
 
@@ -301,9 +324,11 @@ end
 -- ---------------------------------------------------------------------------
 
 ---Parse raw feed XML (RSS 2.0 or Atom, auto-detected) into a normalized entry list.
+---On failure (ok == false), the second return is the error message and the third is nil.
+---On success (ok == true), the second return is the feed's <title> (nil if absent) and the third is its entries.
 ---@param xml string
 ---@return boolean ok
----@return string|CustomRss.Entry[] feed_title_or_err
+---@return string? feed_title_or_err
 ---@return CustomRss.Entry[]? entries
 function M.parse(xml)
 	if type(xml) ~= "string" or xml:match("^%s*$") then

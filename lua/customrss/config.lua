@@ -7,9 +7,9 @@ local defaults = {
 	feeds = {},
 
 	sort = {
-		---@type CustomRss.SortBy|fun(a: CustomRss.Entry, b: CustomRss.Entry): boolean
+		---@type CustomRss.SortBy|CustomRss.SortComparator
 		by = "date",
-		---@type "asc"|"desc"|nil  nil = use the natural default for `by` (see rss.sort.default_order)
+		---@type "asc"|"desc"|nil  nil = use the natural default for `by` (see customrss.sort.default_order)
 		order = nil,
 	},
 

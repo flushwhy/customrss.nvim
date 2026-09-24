@@ -24,12 +24,12 @@ function M.setup(opts)
 	require("customrss.config").setup(opts)
 end
 
----@param entries CustomRss.Entry[]
+---@param entries CustomRss.Entry[]?
 ---@param feed CustomRss.FeedConfig
 ---@param feed_title string?
 local function tag_entries(entries, feed, feed_title)
 	local name = feed.name or feed_title or feed.url
-	for i, e in ipairs(entries) do
+	for i, e in ipairs(entries or {}) do
 		e.feed_name = name
 		e.feed_url = feed.url
 		if not e.id or e.id == "" then
@@ -44,7 +44,7 @@ end
 ---cache the result. Fires `User CustomRssUpdated` (data = { entries, errors }) so a
 ---display layer can subscribe instead of polling `get_entries()`.
 ---@param cb? fun(entries: CustomRss.Entry[], errors: { feed: CustomRss.FeedConfig, err: string }[])
----@param opts? { sort?: table } override config.sort for just this refresh
+---@param opts? CustomRss.RefreshOpts override config.sort for just this refresh
 function M.refresh(cb, opts)
 	local Util = require("customrss.util")
 	if not M.did_setup then
@@ -76,7 +76,7 @@ function M.refresh(cb, opts)
 				local ok, feed_title_or_err, entries = Parse.parse(result.body_or_err)
 				if ok then
 					tag_entries(entries, result.feed, feed_title_or_err)
-					vim.list_extend(all_entries, entries)
+					vim.list_extend(all_entries, entries or {})
 				else
 					table.insert(errors, { feed = result.feed, err = feed_title_or_err })
 				end
@@ -115,7 +115,7 @@ end
 
 ---Return the cached entries from the last refresh(), optionally re-sorted
 ---in place without re-fetching anything over the network.
----@param opts? { sort?: table }
+---@param opts? CustomRss.RefreshOpts
 ---@return CustomRss.Entry[]
 function M.get_entries(opts)
 	if opts and opts.sort then
