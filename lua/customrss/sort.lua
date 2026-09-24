@@ -100,7 +100,11 @@ function M.sort(entries, opts)
 
   local factory = FACTORIES[by]
   if not factory then
-    error(("customrss.nvim: unknown sort.by %q (expected one of: date, feed, title, unread, or a function)"):format(tostring(by)))
+    error(
+      ("customrss.nvim: unknown sort.by %q (expected one of: date, feed, title, unread, or a function)"):format(
+        tostring(by)
+      )
+    )
   end
   local order = opts.order or M.default_order[by]
   table.sort(entries, factory(order == "asc"))

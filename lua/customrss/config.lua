@@ -94,7 +94,11 @@ function M.setup(opts)
     config.sort = vim.deepcopy(defaults.sort)
   end
 
-  if type(config.fetch) ~= "table" or type(config.fetch.timeout) ~= "number" or type(config.fetch.concurrency) ~= "number" then
+  if
+    type(config.fetch) ~= "table"
+    or type(config.fetch.timeout) ~= "number"
+    or type(config.fetch.concurrency) ~= "number"
+  then
     Util.error("Invalid 'fetch' option: expected { timeout = number, concurrency = number }")
     config.fetch = vim.deepcopy(defaults.fetch)
   end

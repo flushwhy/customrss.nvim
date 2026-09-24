@@ -101,8 +101,18 @@ M.extract_blocks = extract_blocks
 -- ---------------------------------------------------------------------------
 
 local MONTHS = {
-  Jan = 1, Feb = 2, Mar = 3, Apr = 4, May = 5, Jun = 6,
-  Jul = 7, Aug = 8, Sep = 9, Oct = 10, Nov = 11, Dec = 12,
+  Jan = 1,
+  Feb = 2,
+  Mar = 3,
+  Apr = 4,
+  May = 5,
+  Jun = 6,
+  Jul = 7,
+  Aug = 8,
+  Sep = 9,
+  Oct = 10,
+  Nov = 11,
+  Dec = 12,
 }
 
 ---Days since 1970-01-01 for a given proleptic-Gregorian y/m/d (Howard Hinnant's algorithm).
@@ -113,9 +123,9 @@ local MONTHS = {
 local function days_from_civil(y, m, d)
   y = m <= 2 and y - 1 or y
   local era = (y >= 0 and y or y - 399) // 400
-  local yoe = y - era * 400 -- [0, 399]
+  local yoe = y - era * 400                                      -- [0, 399]
   local doy = (153 * (m + (m > 2 and -3 or 9)) + 2) // 5 + d - 1 -- [0, 365]
-  local doe = yoe * 365 + yoe // 4 - yoe // 100 + doy -- [0, 146096]
+  local doe = yoe * 365 + yoe // 4 - yoe // 100 + doy            -- [0, 146096]
   return era * 146097 + doe - 719468
 end
 
@@ -164,8 +174,7 @@ function M.parse_rfc822(str)
   if not str then
     return nil
   end
-  local d, mon, y, h, mi, s, tz =
-    str:match("(%d%d?)%s+(%a+)%s+(%d%d%d?%d?)%s+(%d%d?):(%d%d):?(%d?%d?)%s*(%S*)")
+  local d, mon, y, h, mi, s, tz = str:match("(%d%d?)%s+(%a+)%s+(%d%d%d?%d?)%s+(%d%d?):(%d%d):?(%d?%d?)%s*(%S*)")
   if not d then
     return nil
   end
@@ -190,8 +199,7 @@ function M.parse_iso8601(str)
   if not str then
     return nil
   end
-  local y, mo, d, h, mi, s, tz =
-    str:match("(%d%d%d%d)-(%d%d)-(%d%d)T(%d%d):(%d%d):?(%d?%d?)(%S*)")
+  local y, mo, d, h, mi, s, tz = str:match("(%d%d%d%d)-(%d%d)-(%d%d)T(%d%d):(%d%d):?(%d?%d?)(%S*)")
   if not y then
     return nil
   end
@@ -302,7 +310,10 @@ function M.parse(xml)
     return false, "empty response body"
   end
   local feed_title, entries
-  if xml:find("<entry", 1, true) and (xml:find("<feed", 1, true) or xml:find("xmlns=\"http://www.w3.org/2005/Atom\"", 1, true)) then
+  if
+      xml:find("<entry", 1, true)
+      and (xml:find("<feed", 1, true) or xml:find('xmlns="http://www.w3.org/2005/Atom"', 1, true))
+  then
     feed_title, entries = parse_atom(xml)
   elseif xml:find("<item", 1, true) or xml:find("<channel", 1, true) or xml:find("<rss", 1, true) then
     feed_title, entries = parse_rss(xml)
