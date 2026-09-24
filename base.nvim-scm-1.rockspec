@@ -4,17 +4,15 @@ local _MODREV, _SPECREV = "scm", "-1"
 rockspec_format = "3.0"
 version = _MODREV .. _SPECREV
 
-local user = "S1M0N38"
-package = "base.nvim"
+local user = "flushwhy"
+package = "customrss.nvim"
 
 description = {
-	summary = "Modern template for Neovim plugin development",
-	detailed = [[
-base.nvim is a simple template for Neovim plugin development that provides
-best practices, testing setup, type definitions, and automated workflows.
+	summary = "CustomRSS feed reader that gets given a list of RSS feeds, and returns sorted lists",
+	detailed = [[ This is a RSS feed reader/aggregator that tries to be flat and easy to use. You send a list of RSS feeds, and it returns the feeds in one of the sorted feeds.
   ]],
-	labels = { "neovim", "template", "plugin", "lua", "testing", "mini-test" },
-	homepage = "https://github.com/" .. user .. "/" .. package,
+	labels = { "neovim", "RSS", "plugin", "lua" },
+	homepage = "https://github.com/" .. user .."/" .. package,
 	license = "MIT",
 }
 
