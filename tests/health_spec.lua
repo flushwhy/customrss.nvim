@@ -1,37 +1,38 @@
 ---@module 'luassert'
 
-local health = require("base.health")
-local base = require("base")
+local CustomRss = require("customrss")
+local health = require("customrss.health")
 
-describe("health check", function()
-  it("runs with default config without errors", function()
-    base.did_setup = false
-    base.setup({})
+describe("customrss.health", function()
+  it("reports an error (not a crash) when setup() hasn't been called", function()
+    CustomRss.did_setup = false
     assert.has_no.errors(function()
       health.check()
     end)
   end)
 
-  it("runs with custom config without errors", function()
-    base.did_setup = false
-    base.setup({ name = "Test User" })
+  it("runs clean with a default config", function()
+    CustomRss.did_setup = false
+    CustomRss.setup({})
     assert.has_no.errors(function()
       health.check()
     end)
   end)
 
-  it("handles invalid config gracefully", function()
-    base.did_setup = false
-    base.setup({ name = 123 })
+  it("runs clean with feeds and a custom sort configured", function()
+    CustomRss.did_setup = false
+    CustomRss.setup({
+      feeds = { { url = "https://example.com/feed.xml" } },
+      sort = { by = "title" },
+    })
     assert.has_no.errors(function()
       health.check()
     end)
   end)
 
-  it("reports error when setup() was not called", function()
-    -- Create a fresh health module to test without setup
-    base.did_setup = false
-    -- Don't call setup — health should report the issue
+  it("does not crash even when the config was invalid at setup time", function()
+    CustomRss.did_setup = false
+    CustomRss.setup({ feeds = "not-a-list", sort = { by = "bogus" } })
     assert.has_no.errors(function()
       health.check()
     end)
