@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2026-09-25)
+
+
+### Bug Fixes
+
+* Fixed and added tests ([a90a1b3](https://github.com/flushwhy/customrss.nvim/commit/a90a1b3a5b8030b4a67cb2f651502e99288b73fd))
+
 ## [3.0.0](https://github.com/S1M0N38/base.nvim/compare/v2.0.1...v3.0.0) (2026-05-06)
 
 
